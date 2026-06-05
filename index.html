@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AETHERIS // Space Debris Visualizer & Risk Mapping</title>
+  <meta name="description" content="Stunning 3D WebGL orbital simulation and collision risk mapping prototype for space debris visualization.">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+  <!-- Three.js Container -->
+  <div id="canvas-container"></div>
+
+  <!-- HUD Tips -->
+  <div class="view-tip">
+    <span>LEFT CLICK + DRAG to rotate</span>
+    <span>•</span>
+    <span>RIGHT CLICK + DRAG to pan</span>
+    <span>•</span>
+    <span>SCROLL to zoom</span>
+  </div>
+
+  <div class="compass-hud">
+    <div class="compass-ring"></div>
+    <span>ORBITAL PLANE</span>
+  </div>
+
+  <!-- Full HUD UI Layout -->
+  <div class="hud-layout">
+    
+    <!-- Header -->
+    <header class="hud-panel">
+      <div class="title-container">
+        <h1>AETHERIS <span>// ORBITAL DEBRIS HUD</span></h1>
+        <p>Space Debris Visualization & Volumetric Risk Mapping System</p>
+      </div>
+      <div class="system-status">
+        <div class="status-item">
+          <span>CATALOGED:</span>
+          <span id="debris-count-val" class="info-value cyan">2,450</span>
+        </div>
+        <div class="status-item">
+          <span>SIM TIME:</span>
+          <span id="sim-time-val" class="info-value">0.00s</span>
+        </div>
+        <div class="status-item">
+          <span>RISK INDEX:</span>
+          <span id="risk-index-indicator" class="info-value emerald">LOW</span>
+        </div>
+        <div class="status-item">
+          <span class="indicator pulse" id="sys-status-dot"></span>
+          <span id="sys-status-text">NOMINAL</span>
+        </div>
+      </div>
+    </header>
+
+    <!-- Left Bar: Controls & Filters -->
+    <aside class="hud-panel" id="left-panel">
+      <div class="panel-header">
+        <span>SIMULATION CONTROLS</span>
+      </div>
+      <div class="panel-content">
+        <!-- Time scale -->
+        <div class="control-group">
+          <label for="time-scale-slider">Time Acceleration</label>
+          <div class="slider-container">
+            <input type="range" id="time-scale-slider" min="1" max="1000" value="100">
+            <span class="slider-val" id="time-scale-val">100x</span>
+          </div>
+        </div>
+
+        <!-- Density Voxel Grid -->
+        <div class="control-group">
+          <label>Density Mapping Options</label>
+          <button class="btn-toggle active" id="toggle-density-grid">Risk Volume Grid</button>
+          <button class="btn-toggle" id="toggle-orbit-lines" style="margin-top: 8px;">Show Orbit Traces</button>
+        </div>
+
+        <div class="control-group">
+          <label for="grid-resolution-select">Voxel Grid Resolution</label>
+          <select id="grid-resolution-select">
+            <option value="16">16 x 16 x 16 (Coarse)</option>
+            <option value="32" selected>32 x 32 x 32 (Standard)</option>
+            <option value="48">48 x 48 x 48 (Fine)</option>
+          </select>
+        </div>
+
+        <!-- Filter Options -->
+        <div class="panel-header" style="margin-top: 15px; border-top: 1px solid rgba(255, 255, 255, 0.08); padding-top: 15px;">
+          <span>FILTERS</span>
+        </div>
+
+        <!-- Altitude Regime -->
+        <div class="control-group">
+          <label>Orbital Regime</label>
+          <div class="filter-btn-grid" id="regime-filters">
+            <button class="btn-toggle active" data-filter="all">All</button>
+            <button class="btn-toggle" data-filter="leo">LEO (Low)</button>
+            <button class="btn-toggle" data-filter="meo">MEO (Mid)</button>
+            <button class="btn-toggle" data-filter="geo">GEO (High)</button>
+          </div>
+        </div>
+
+        <!-- Object Category -->
+        <div class="control-group">
+          <label>Debris Category</label>
+          <div class="filter-btn-grid" id="category-filters">
+            <button class="btn-toggle active" data-filter="all">All</button>
+            <button class="btn-toggle" data-filter="sat">Satellites</button>
+            <button class="btn-toggle" data-filter="rocket">Rocket Stages</button>
+            <button class="btn-toggle" data-filter="frag">Fragmentation</button>
+          </div>
+        </div>
+
+        <!-- Country of Origin -->
+        <div class="control-group">
+          <label>Country of Origin</label>
+          <select id="country-filter-select">
+            <option value="all">All Countries</option>
+            <option value="us">United States (US)</option>
+            <option value="ru">Russian Fed. (RU)</option>
+            <option value="cn">China (CN)</option>
+            <option value="esa">European Space (ESA)</option>
+            <option value="other">Other / Unknown</option>
+          </select>
+        </div>
+      </div>
+    </aside>
+
+    <!-- Bottom Bar: Logs & Telemetry -->
+    <footer class="hud-panel" id="bottom-panel">
+      <div class="panel-header">
+        <span>TELEMETRY LOG STREAM</span>
+      </div>
+      <div class="panel-content" style="padding: 10px;">
+        <div class="log-terminal" id="log-terminal-stream">
+          <div class="log-entry">
+            <span class="log-time">[00:00:00]</span>
+            <span class="log-msg info">System initialization completed. OpenGL/WebGL rendering active.</span>
+          </div>
+          <div class="log-entry">
+            <span class="log-time">[00:00:00]</span>
+            <span class="log-msg">Propagating Keplerian elements for 2,450 debris candidates...</span>
+          </div>
+          <div class="log-entry">
+            <span class="log-time">[00:00:01]</span>
+            <span class="log-msg info">Volumetric density voxel structure initialized: 32^3.</span>
+          </div>
+        </div>
+      </div>
+    </footer>
+
+    <!-- Right Bar: Stats & Info Cards -->
+    <aside class="hud-panel" id="right-panel">
+      <div class="panel-header">
+        <span>COLLISION RISK ANALYTICS</span>
+      </div>
+      <div class="panel-content">
+        <!-- Live Debris Density Chart -->
+        <div class="control-group">
+          <label>Altitude Distribution (Count)</label>
+          <div class="chart-container" id="altitude-chart">
+            <!-- Dynamically populated bars -->
+          </div>
+          <div class="chart-label-container">
+            <span>LEO</span>
+            <span>MEO</span>
+            <span>GEO</span>
+          </div>
+        </div>
+
+        <!-- Target Info Card -->
+        <div class="control-group">
+          <label>Selected Target Telemetry</label>
+          <div id="target-telemetry-card" class="selected-card">
+            <p class="selected-card-title" id="card-obj-name">Select an object...</p>
+            <div class="info-row">
+              <span class="info-label">CAT ID:</span>
+              <span class="info-value" id="card-obj-id">N/A</span>
+            </div>
+            <div class="info-row">
+              <span class="info-label">Altitude:</span>
+              <span class="info-value" id="card-obj-alt">N/A</span>
+            </div>
+            <div class="info-row">
+              <span class="info-label">Velocity:</span>
+              <span class="info-value" id="card-obj-vel">N/A</span>
+            </div>
+            <div class="info-row">
+              <span class="info-label">Inc / Ecc:</span>
+              <span class="info-value" id="card-obj-inc-ecc">N/A</span>
+            </div>
+            <div class="info-row">
+              <span class="info-label">Collision Risk:</span>
+              <span class="info-value" id="card-obj-risk">N/A</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Kessler Cascade Simulator -->
+        <div class="control-group" style="margin-top: 10px;">
+          <label>Cascade Threat Simulator</label>
+          <button class="btn-action" id="trigger-kessler-btn">TRIGGER KESSLER CASCADE</button>
+          <p style="font-size: 0.65rem; color: var(--text-muted); margin-top: 5px; font-family: var(--font-hud); text-align: justify; line-height: 1.2;">
+            Triggers a high-velocity impact event in Low Earth Orbit (LEO), spawning fragmentation debris and propagating a collision cascade.
+          </p>
+        </div>
+      </div>
+    </aside>
+
+  </div>
+
+  <!-- CDN Scripts for Three.js -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+  <!-- Main Application Logic -->
+  <script src="app.js"></script>
+</body>
+</html>
