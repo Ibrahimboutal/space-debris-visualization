@@ -27,6 +27,7 @@ PFNGLGETUNIFORMLOCATIONPROC glGetUniformLocation = nullptr;
 PFNGLUNIFORMMATRIX4FVPROC glUniformMatrix4fv = nullptr;
 PFNGLUNIFORM3FVPROC glUniform3fv = nullptr;
 PFNGLUNIFORM1FPROC glUniform1f = nullptr;
+PFNGLBUFFERSUBDATAPROC glBufferSubData = nullptr;
 
 Renderer::Renderer() 
     : m_earthShader(0), m_particleShader(0), m_voxelShader(0),
@@ -64,9 +65,10 @@ bool Renderer::InitializeGLPointers() {
     glUniformMatrix4fv = (PFNGLUNIFORMMATRIX4FVPROC)wglGetProcAddress("glUniformMatrix4fv");
     glUniform3fv = (PFNGLUNIFORM3FVPROC)wglGetProcAddress("glUniform3fv");
     glUniform1f = (PFNGLUNIFORM1FPROC)wglGetProcAddress("glUniform1f");
+    glBufferSubData = (PFNGLBUFFERSUBDATAPROC)wglGetProcAddress("glBufferSubData");
 
     if (!glGenVertexArrays || !glBindVertexArray || !glGenBuffers || !glBindBuffer ||
-        !glBufferData || !glEnableVertexAttribArray || !glVertexAttribPointer ||
+        !glBufferData || !glBufferSubData || !glEnableVertexAttribArray || !glVertexAttribPointer ||
         !glCreateShader || !glCompileShader || !glUseProgram || !glUniformMatrix4fv) {
         std::cerr << "CRITICAL: Failed to load OpenGL core function pointers." << std::endl;
         return false;
